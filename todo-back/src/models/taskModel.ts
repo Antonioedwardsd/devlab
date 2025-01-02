@@ -9,7 +9,8 @@ interface TaskAttributes {
 	status: "pending" | "in-progress" | "completed";
 }
 
-interface TaskCreationAttributes extends Optional<TaskAttributes, "id"> {}
+interface TaskCreationAttributes
+	extends Optional<TaskAttributes, "id" | "completed" | "status"> {}
 
 class Task
 	extends Model<TaskAttributes, TaskCreationAttributes>
@@ -20,8 +21,6 @@ class Task
 	public description?: string;
 	public completed!: boolean;
 	public status!: "pending" | "in-progress" | "completed";
-
-	// Propiedades automáticas de Sequelize
 	public readonly createdAt!: Date;
 	public readonly updatedAt!: Date;
 }
