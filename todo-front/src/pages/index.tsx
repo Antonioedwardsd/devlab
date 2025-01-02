@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchTasks, createTask, updateTask, deleteTask } from './api/todos';
+import { fetchTasks, createTask, deleteTask } from './api/todos';
+import { useAuth0 } from '@auth0/auth0-react';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -55,17 +56,24 @@ const TaskForm = styled.form`
 `;
 
 const Home = () => {
+  const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
   const [tasks, setTasks] = useState<any[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   useEffect(() => {
-    const loadTasks = async () => {
-      const fetchedTasks = await fetchTasks();
-      setTasks(fetchedTasks);
-    };
-    loadTasks();
-  }, []);
+    if (isAuthenticated) {
+      const loadTasks = async () => {
+        try {
+          const fetchedTasks = await fetchTasks();
+          setTasks(fetchedTasks);
+        } catch (error) {
+          console.error('Failed to fetch tasks:', error);
+        }
+      };
+      loadTasks();
+    }
+  }, [isAuthenticated]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,33 +90,46 @@ const Home = () => {
 
   return (
     <Container>
-      <h1>Task List</h1>
-      <TaskForm onSubmit={handleAddTask}>
-        <input
-          type="text"
-          placeholder="What do you have planned?"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <Button type="submit">Add Task</Button>
-      </TaskForm>
-      <TaskList>
-        {tasks.map((task) => (
-          <TaskItem key={task.id}>
-            <span>{task.title}</span>
-            <div>
-              <Button onClick={() => handleDeleteTask(task.id)}>Delete</Button>
-            </div>
-          </TaskItem>
-        ))}
-      </TaskList>
+      {!isAuthenticated ? (
+        <div>
+          <h1>Welcome to Task Manager</h1>
+          <Button onClick={() => loginWithRedirect()}>Login</Button>
+        </div>
+      ) : (
+        <>
+          <h1>Task List</h1>
+          <p>Welcome, {user?.name}!</p>
+          <Button onClick={() => logout()}>Logout</Button>
+          <TaskForm onSubmit={handleAddTask}>
+            <input
+              type="text"
+              placeholder="What do you have planned?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <Button type="submit">Add Task</Button>
+          </TaskForm>
+          <TaskList>
+            {tasks.map((task) => (
+              <TaskItem key={task.id}>
+                <span>{task.title}</span>
+                <div>
+                  <Button onClick={() => handleDeleteTask(task.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </TaskItem>
+            ))}
+          </TaskList>
+        </>
+      )}
     </Container>
   );
 };
