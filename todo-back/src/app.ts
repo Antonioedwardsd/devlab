@@ -9,6 +9,10 @@ import Task from "./models/taskModel";
 import taskRoutes from "./routes/taskRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 
+import { auth } from "express-openid-connect";
+import jwt from "express-jwt";
+import jwksRsa from "jwks-rsa";
+
 const app = express();
 
 app.use(cors({ origin: "http://localhost:3001" }));
@@ -18,10 +22,6 @@ app.use(errorHandler);
 
 const configureAuth = (app: express.Application) => {
 	if (process.env.NODE_ENV !== "test") {
-		const { auth } = require("express-openid-connect");
-		const jwt = require("express-jwt");
-		const jwksRsa = require("jwks-rsa");
-
 		const config = {
 			authRequired: false,
 			auth0Logout: true,
@@ -31,8 +31,9 @@ const configureAuth = (app: express.Application) => {
 			baseURL: process.env.BASE_URL || "http://localhost:3000",
 			clientID: "XgKTPvpKb06BkkADcGnd9E5M8fctMigK",
 			issuerBaseURL: "https://dev-ly8kfge7r5g4gzlc.us.auth0.com",
-			audience: "https://todoapi.example.com",
 		};
+
+		app.use(auth(config));
 
 		const checkJwt = jwt({
 			secret: jwksRsa.expressJwtSecret({
@@ -47,7 +48,6 @@ const configureAuth = (app: express.Application) => {
 			algorithms: ["RS256"],
 		});
 
-		app.use(auth(config));
 		app.get("/api/protected", checkJwt, (req, res) => {
 			res.status(200).json({
 				message: "You are authenticated!",
@@ -63,7 +63,7 @@ app.get("/", (req, res) => {
 	res.status(200).json({ message: "Welcome to To-Do Backend!" });
 });
 
-const PORT = 3000;
+const PORT = 3001;
 
 sequelize
 	.authenticate()
