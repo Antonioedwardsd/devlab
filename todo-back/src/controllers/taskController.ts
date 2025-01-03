@@ -49,10 +49,12 @@ export const updateTaskController = async (req: Request, res: Response) => {
 		const { id } = req.params;
 		const validatedData = updateTaskSchema.parse(req.body);
 		const task = await Task.findByPk(id);
+
 		if (!task) {
 			res.status(404).json({ error: "Task not found" });
 			return;
 		}
+
 		await task.update(validatedData);
 		res.status(200).json(task);
 	} catch (error) {

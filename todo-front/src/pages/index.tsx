@@ -1,47 +1,28 @@
 import React, { useEffect, useState } from 'react';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { fetchTasks, createTask, deleteTask } from './api/todos';
 import { useAuth0 } from '@auth0/auth0-react';
 import styled from 'styled-components';
+
+type TaskFormInputs = {
+  title: string;
+  description?: string;
+};
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #1e1e2f;
+  background-color: #0a0b1c;
   color: white;
-  height: 100vh;
+  min-height: 100vh;
   padding: 20px;
+  font-family: 'Arial', sans-serif;
 `;
 
-const TaskList = styled.ul`
-  list-style: none;
-  padding: 0;
-  width: 100%;
-  max-width: 600px;
-`;
-
-const TaskItem = styled.li`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2b2b3c;
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 5px;
-`;
-
-const Button = styled.button`
-  background-color: #ff007c;
-  border: none;
-  color: white;
-  padding: 5px 10px;
-  margin-left: 10px;
-  cursor: pointer;
-  border-radius: 5px;
-
-  &:hover {
-    background-color: #ff4da6;
-  }
+const Title = styled.h1`
+  font-size: 2rem;
+  margin-bottom: 20px;
 `;
 
 const TaskForm = styled.form`
@@ -51,57 +32,112 @@ const TaskForm = styled.form`
 
   input {
     margin-right: 10px;
-    padding: 5px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    width: 300px;
+    background-color: #1e1e2f;
+    color: white;
+    outline: none;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ff007c;
+    color: white;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #ff4da6;
+    }
+  }
+`;
+
+const TaskList = styled.ul`
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 20px;
+`;
+
+const TaskItem = styled.li`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1e1e2f;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-radius: 8px;
+
+  span {
+    font-size: 1rem;
+  }
+
+  div {
+    display: flex;
+    gap: 10px;
+  }
+`;
+
+const ActionButton = styled.button`
+  background-color: transparent;
+  border: none;
+  color: #ff007c;
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  &:hover {
+    color: #ff4da6;
+    text-decoration: underline;
   }
 `;
 
 const Home = () => {
   const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
   const [tasks, setTasks] = useState<any[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [backendStatus, setBackendStatus] = useState<string | null>(null);
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [editTaskId, setEditTaskId] = useState<string | null>(null);
+  const { register, handleSubmit, reset, setValue } = useForm<TaskFormInputs>();
 
-  useEffect(() => {
-    const testBackendConnection = async () => {
-      try {
-        const response = await fetch(`${apiBaseUrl}/todos`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Backend connection successful:', data);
-          setBackendStatus('Connected');
-        } else {
-          console.error('Backend connection failed:', response.statusText);
-          setBackendStatus('Failed');
-        }
-      } catch (error) {
-        console.error('Error connecting to backend:', error);
-        setBackendStatus('Error');
+  const onSubmit: SubmitHandler<TaskFormInputs> = async (data) => {
+    try {
+      console.log('Editing Task ID:', editTaskId);
+      console.log('Submitted Data:', data);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/todos/${editTaskId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-    };
 
-    testBackendConnection();
+      const updatedTask = await response.json();
+      console.log('Updated Task Response:', updatedTask);
 
-    if (isAuthenticated) {
-      const loadTasks = async () => {
-        try {
-          const fetchedTasks = await fetchTasks();
-          setTasks(fetchedTasks);
-        } catch (error) {
-          console.error('Failed to fetch tasks:', error);
-        }
-      };
-      loadTasks();
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === editTaskId ? updatedTask : task)),
+      );
+
+      setEditTaskId(null);
+      reset();
+      console.log('Updated Tasks State:', tasks);
+    } catch (error) {
+      console.error('Error updating task:', error);
     }
-  }, [isAuthenticated, apiBaseUrl]);
+  };
 
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newTask = await createTask(title, description);
-    setTasks([...tasks, newTask]);
-    setTitle('');
-    setDescription('');
+  const handleEditTask = (task: any) => {
+    setEditTaskId(task.id);
+    setValue('title', task.title);
+    setValue('description', task.description);
   };
 
   const handleDeleteTask = async (id: string) => {
@@ -109,50 +145,50 @@ const Home = () => {
     setTasks(tasks.filter((task) => task.id !== id));
   };
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      const loadTasks = async () => {
+        const fetchedTasks = await fetchTasks();
+        setTasks(fetchedTasks);
+      };
+      loadTasks();
+    }
+  }, [isAuthenticated]);
+
   return (
     <Container>
       {!isAuthenticated ? (
         <div>
           <h1>Welcome to Task Manager</h1>
-          <p>
-            Backend Status:{' '}
-            {backendStatus === null ? 'Checking...' : backendStatus}
-          </p>
-          <Button onClick={() => loginWithRedirect()}>Login</Button>
+          <button onClick={() => loginWithRedirect()}>Login</button>
         </div>
       ) : (
         <>
-          <h1>Task List</h1>
-          <p>Welcome, {user?.name}!</p>
-          <p>
-            Backend Status:{' '}
-            {backendStatus === null ? 'Checking...' : backendStatus}
-          </p>
-          <Button onClick={() => logout()}>Logout</Button>
-          <TaskForm onSubmit={handleAddTask}>
+          <Title>Task List</Title>
+          <TaskForm onSubmit={handleSubmit(onSubmit)}>
             <input
-              type="text"
-              placeholder="What do you have planned?"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
+              {...register('title', { required: 'Title is required' })}
+              placeholder="Task Title"
             />
             <input
-              type="text"
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              {...register('description')}
+              placeholder="Task Description (optional)"
             />
-            <Button type="submit">Add Task</Button>
+            <button type="submit">
+              {editTaskId ? 'Update Task' : 'Add Task'}
+            </button>
           </TaskForm>
           <TaskList>
             {tasks.map((task) => (
               <TaskItem key={task.id}>
                 <span>{task.title}</span>
                 <div>
-                  <Button onClick={() => handleDeleteTask(task.id)}>
-                    Delete
-                  </Button>
+                  <ActionButton onClick={() => handleEditTask(task)}>
+                    EDIT
+                  </ActionButton>
+                  <ActionButton onClick={() => handleDeleteTask(task.id)}>
+                    DELETE
+                  </ActionButton>
                 </div>
               </TaskItem>
             ))}
