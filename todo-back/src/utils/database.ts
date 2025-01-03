@@ -15,7 +15,7 @@ const sequelize = new Sequelize({
 	password: isTestEnv ? undefined : process.env.DB_PASSWORD || "root",
 	host: isTestEnv ? undefined : process.env.DB_HOST || "localhost",
 	port: isTestEnv ? undefined : parseInt(process.env.DB_PORT || "5432"),
-	logging: !isTestEnv,
+	logging: false,
 });
 
 export default sequelize;

@@ -60,8 +60,29 @@ const Home = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [backendStatus, setBackendStatus] = useState<string | null>(null);
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
+    const testBackendConnection = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/todos`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Backend connection successful:', data);
+          setBackendStatus('Connected');
+        } else {
+          console.error('Backend connection failed:', response.statusText);
+          setBackendStatus('Failed');
+        }
+      } catch (error) {
+        console.error('Error connecting to backend:', error);
+        setBackendStatus('Error');
+      }
+    };
+
+    testBackendConnection();
+
     if (isAuthenticated) {
       const loadTasks = async () => {
         try {
@@ -73,7 +94,7 @@ const Home = () => {
       };
       loadTasks();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, apiBaseUrl]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,12 +114,20 @@ const Home = () => {
       {!isAuthenticated ? (
         <div>
           <h1>Welcome to Task Manager</h1>
+          <p>
+            Backend Status:{' '}
+            {backendStatus === null ? 'Checking...' : backendStatus}
+          </p>
           <Button onClick={() => loginWithRedirect()}>Login</Button>
         </div>
       ) : (
         <>
           <h1>Task List</h1>
           <p>Welcome, {user?.name}!</p>
+          <p>
+            Backend Status:{' '}
+            {backendStatus === null ? 'Checking...' : backendStatus}
+          </p>
           <Button onClick={() => logout()}>Logout</Button>
           <TaskForm onSubmit={handleAddTask}>
             <input

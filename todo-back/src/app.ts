@@ -15,9 +15,15 @@ import jwksRsa from "jwks-rsa";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3001" }));
+app.use(
+	cors({
+		origin: "http://localhost:3000",
+		methods: ["GET", "POST", "PUT", "DELETE"],
+		credentials: true,
+	})
+);
 app.use(express.json());
-app.use(taskRoutes);
+app.use("/api", taskRoutes);
 app.use(errorHandler);
 
 const configureAuth = (app: express.Application) => {
@@ -28,7 +34,7 @@ const configureAuth = (app: express.Application) => {
 			secret:
 				process.env.AUTH_SECRET ||
 				"a_long_randomly_generated_string_stored_in_env",
-			baseURL: process.env.BASE_URL || "http://localhost:3000",
+			baseURL: process.env.BASE_URL || "http://localhost:5000",
 			clientID: "XgKTPvpKb06BkkADcGnd9E5M8fctMigK",
 			issuerBaseURL: "https://dev-ly8kfge7r5g4gzlc.us.auth0.com",
 		};
@@ -63,7 +69,7 @@ app.get("/", (req, res) => {
 	res.status(200).json({ message: "Welcome to To-Do Backend!" });
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 5000;
 
 sequelize
 	.authenticate()

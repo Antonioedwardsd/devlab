@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import { authConfig } from '../auth/authConfig';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
+  console.log('App component mounted');
   return (
     <Auth0Provider
       domain={authConfig.domain}
