@@ -40,25 +40,33 @@ export const getTaskById = async (
 	}
 };
 
-export const updateTask = async (
-	req: Request,
-	res: Response
-): Promise<void> => {
+export const updateTask = async (req: Request, res: Response) => {
+	const { id } = req.params;
+	const updateData = req.body;
 	try {
-		const { id } = req.params;
-		const { title, description, completed } = req.body;
-		const task = await Task.findByIdAndUpdate(
-			id,
-			{ title, description, completed },
-			{ new: true }
-		);
-		if (!task) {
-			res.status(404).json({ error: "Task not found" });
+		if (!id) {
+			res.status(400).json({ message: "Task ID is required." });
 			return;
 		}
-		res.status(200).json(task);
+
+		const updatedTask = await Task.findByIdAndUpdate(id, updateData, {
+			new: true,
+			runValidators: true,
+		});
+
+		if (!updatedTask) {
+			res.status(404).json({ message: "Task not found." });
+			return;
+		}
+
+		res
+			.status(200)
+			.json({ message: "Task updated successfully.", task: updatedTask });
 	} catch (error) {
-		res.status(500).json({ error: "Failed to update task" });
+		console.error("Error updating task:", error);
+		res
+			.status(500)
+			.json({ message: "An error occurred while updating the task." });
 	}
 };
 

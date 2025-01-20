@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import apiService from "../services/apiService";
-import { v4 as uuidv4 } from "uuid";
 
 const Container = styled.div`
 	background-color: #20232a;
@@ -101,19 +100,17 @@ const DeleteButton = styled(EditButton)`
 const TaskList: React.FC = () => {
 	const [tasks, setTasks] = useState<any[]>([]);
 	const [newTask, setNewTask] = useState("");
+	const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+	const [editValue, setEditValue] = useState("");
 
-	const { fetchTasks, createTask, deleteTask } = apiService();
+	const { fetchTasks, createTask, deleteTask, updateTask } = apiService();
 
 	const loadTasks = async () => {
 		try {
 			const data = await fetchTasks();
 			setTasks(data);
 		} catch (error: any) {
-			if (error.response?.status === 401) {
-				console.error("Unauthorized: Please log in again.");
-			} else {
-				console.error("Error loading tasks:", error.message);
-			}
+			console.error("Error loading tasks:", error.message);
 		}
 	};
 
@@ -124,12 +121,8 @@ const TaskList: React.FC = () => {
 			const addedTask = await createTask(newTask);
 			setTasks((prev) => [...prev, addedTask]);
 			setNewTask("");
-		} catch (error: any) {
-			if (error.response?.status === 401) {
-				console.error("Unauthorized: Cannot add task without logging in.");
-			} else {
-				console.error("Error adding task:", error.message);
-			}
+		} catch (error) {
+			console.error("Error adding task:", error);
 		}
 	};
 
@@ -140,6 +133,32 @@ const TaskList: React.FC = () => {
 		} catch (error) {
 			console.error("Error deleting task:", error);
 		}
+	};
+
+	const handleEditClick = (task: any) => {
+		setEditingTaskId(task._id);
+		setEditValue(task.title);
+	};
+
+	const handleSaveEdit = async (taskId: string) => {
+		try {
+			const response = await updateTask(taskId, { title: editValue });
+			const updatedTask = response.task;
+
+			setTasks((prev) =>
+				prev.map((task) =>
+					task._id === updatedTask._id ? { ...task, ...updatedTask } : task
+				)
+			);
+			setEditingTaskId(null);
+		} catch (error) {
+			console.error("Error updating task:", error);
+		}
+	};
+
+	const handleCancelEdit = () => {
+		setEditingTaskId(null);
+		setEditValue("");
 	};
 
 	useEffect(() => {
@@ -160,12 +179,33 @@ const TaskList: React.FC = () => {
 			<TaskContainer>
 				{tasks.map((task) => (
 					<Task key={task._id}>
-						<TaskText>{task.title}</TaskText>
+						{editingTaskId === task._id ? (
+							<div>
+								<Input
+									type="text"
+									value={editValue}
+									onChange={(e) => setEditValue(e.target.value)}
+								/>
+								<AddButton onClick={() => handleSaveEdit(task._id)}>
+									Save
+								</AddButton>
+							</div>
+						) : (
+							<TaskText>{task.title}</TaskText>
+						)}
 						<div>
-							<EditButton>Edit</EditButton>
-							<DeleteButton onClick={() => handleDeleteTask(task._id)}>
-								Delete
-							</DeleteButton>
+							{editingTaskId === task._id ? (
+								<DeleteButton onClick={handleCancelEdit}>Cancel</DeleteButton>
+							) : (
+								<>
+									<EditButton onClick={() => handleEditClick(task)}>
+										Edit
+									</EditButton>
+									<DeleteButton onClick={() => handleDeleteTask(task._id)}>
+										Delete
+									</DeleteButton>
+								</>
+							)}
 						</div>
 					</Task>
 				))}

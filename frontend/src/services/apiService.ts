@@ -34,6 +34,20 @@ const apiService = () => {
 		return response.data;
 	};
 
+	const updateTask = async (id: string, updateData: Record<string, any>) => {
+		try {
+			const response = await axiosInstance.put(`/tasks/${id}`, updateData);
+			console.log("Task updated:", response.data);
+			return response.data;
+		} catch (error: any) {
+			console.error(
+				"Error updating task:",
+				error.response?.data || error.message
+			);
+			throw error;
+		}
+	};
+
 	const deleteTask = async (id: string) => {
 		try {
 			const response = await axiosInstance.delete(`/tasks/${id}`);
@@ -47,7 +61,7 @@ const apiService = () => {
 		}
 	};
 
-	return { fetchTasks, createTask, deleteTask };
+	return { fetchTasks, createTask, updateTask, deleteTask };
 };
 
 export default apiService;
