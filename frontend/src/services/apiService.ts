@@ -35,7 +35,16 @@ const apiService = () => {
 	};
 
 	const deleteTask = async (id: string) => {
-		await axiosInstance.delete(`/tasks/${id}`);
+		try {
+			const response = await axiosInstance.delete(`/tasks/${id}`);
+			console.log("Task deleted:", response.data);
+		} catch (error: any) {
+			console.error(
+				"Error deleting task:",
+				error.response?.data || error.message
+			);
+			throw error;
+		}
 	};
 
 	return { fetchTasks, createTask, deleteTask };

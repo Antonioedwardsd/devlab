@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import apiService from "../services/apiService";
+import { v4 as uuidv4 } from "uuid";
 
 const Container = styled.div`
 	background-color: #20232a;
@@ -135,7 +136,7 @@ const TaskList: React.FC = () => {
 	const handleDeleteTask = async (id: string) => {
 		try {
 			await deleteTask(id);
-			setTasks((prev) => prev.filter((task) => task.id !== id));
+			setTasks((prev) => prev.filter((task) => task._id !== id));
 		} catch (error) {
 			console.error("Error deleting task:", error);
 		}
@@ -158,11 +159,11 @@ const TaskList: React.FC = () => {
 			</InputContainer>
 			<TaskContainer>
 				{tasks.map((task) => (
-					<Task key={task.id}>
+					<Task key={task._id}>
 						<TaskText>{task.title}</TaskText>
 						<div>
 							<EditButton>Edit</EditButton>
-							<DeleteButton onClick={() => handleDeleteTask(task.id)}>
+							<DeleteButton onClick={() => handleDeleteTask(task._id)}>
 								Delete
 							</DeleteButton>
 						</div>
