@@ -24,6 +24,8 @@ const InputContainer = styled.div`
 	display: flex;
 	align-items: center;
 	margin-bottom: 20px;
+	width: 100%;
+	max-width: 500px;
 `;
 
 const Input = styled.input`
@@ -33,7 +35,7 @@ const Input = styled.input`
 	border-radius: 5px;
 	padding: 10px;
 	font-size: 1rem;
-	width: 300px;
+	flex: 1;
 	margin-right: 10px;
 `;
 
@@ -46,6 +48,7 @@ const AddButton = styled.button`
 	font-size: 1rem;
 	cursor: pointer;
 	transition: background-color 0.3s ease;
+	flex-shrink: 0;
 
 	&:hover {
 		background-color: #21a1f1;
@@ -70,10 +73,15 @@ const Task = styled.div`
 	border: 1px solid #61dafb;
 `;
 
-const TaskText = styled.p`
+const TaskText = styled.p<{ completed: boolean }>`
 	margin: 0;
-	color: #ffffff;
+	color: ${(props) => (props.completed ? "#61dafb" : "#ffffff")};
+	text-decoration: ${(props) => (props.completed ? "line-through" : "none")};
 	font-size: 1rem;
+`;
+
+const Checkbox = styled.input`
+	margin-right: 10px;
 `;
 
 const EditButton = styled.button`
@@ -161,6 +169,19 @@ const TaskList: React.FC = () => {
 		setEditValue("");
 	};
 
+	const toggleCompleted = async (id: string, completed: boolean) => {
+		try {
+			await updateTask(id, { completed: !completed });
+			setTasks((prev) =>
+				prev.map((task) =>
+					task._id === id ? { ...task, completed: !task.completed } : task
+				)
+			);
+		} catch (error) {
+			console.error("Error updating task completion:", error);
+		}
+	};
+
 	useEffect(() => {
 		loadTasks();
 	}, []);
@@ -179,23 +200,27 @@ const TaskList: React.FC = () => {
 			<TaskContainer>
 				{tasks.map((task) => (
 					<Task key={task._id}>
-						{editingTaskId === task._id ? (
-							<div>
-								<Input
-									type="text"
-									value={editValue}
-									onChange={(e) => setEditValue(e.target.value)}
-								/>
-								<AddButton onClick={() => handleSaveEdit(task._id)}>
-									Save
-								</AddButton>
-							</div>
-						) : (
-							<TaskText>{task.title}</TaskText>
-						)}
+						<div style={{ display: "flex", alignItems: "center" }}>
+							<Checkbox
+								type="checkbox"
+								checked={task.completed}
+								onChange={() => toggleCompleted(task._id, task.completed)}
+							/>
+							<TaskText completed={task.completed}>{task.title}</TaskText>
+						</div>
 						<div>
 							{editingTaskId === task._id ? (
-								<DeleteButton onClick={handleCancelEdit}>Cancel</DeleteButton>
+								<>
+									<Input
+										type="text"
+										value={editValue}
+										onChange={(e) => setEditValue(e.target.value)}
+									/>
+									<AddButton onClick={() => handleSaveEdit(task._id)}>
+										Save
+									</AddButton>
+									<DeleteButton onClick={handleCancelEdit}>Cancel</DeleteButton>
+								</>
 							) : (
 								<>
 									<EditButton onClick={() => handleEditClick(task)}>
