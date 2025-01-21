@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import apiService from "../services/apiService";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "../redux/store";
+import {
+	fetchTodos,
+	createTodo,
+	updateTodo,
+	deleteTodo,
+} from "../redux/todosSlice";
 
 const Container = styled.div`
 	background-color: #20232a;
@@ -106,134 +113,108 @@ const DeleteButton = styled(EditButton)`
 `;
 
 const TodoList: React.FC = () => {
-	const [todos, setTodos] = useState<any[]>([]);
+	const dispatch: AppDispatch = useDispatch();
+	const { todos, loading, error } = useSelector(
+		(state: RootState) => state.todos
+	);
+
 	const [newTodo, setNewTodo] = useState("");
-	const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
 	const [editValue, setEditValue] = useState("");
-
-	const { fetchTodos, createTodo, deleteTodo, updateTodo } = apiService();
-
-	const loadTodos = async () => {
-		try {
-			const data = await fetchTodos();
-			setTodos(data);
-		} catch (error: any) {
-			console.error("Error loading todos:", error.message);
-		}
-	};
-
-	const handleAddTodo = async () => {
-		if (!newTodo.trim()) return;
-
-		try {
-			const addedTodo = await createTodo(newTodo);
-			setTodos((prev) => [...prev, addedTodo]);
-			setNewTodo("");
-		} catch (error) {
-			console.error("Error adding todo:", error);
-		}
-	};
-
-	const handleDeleteTodo = async (id: string) => {
-		try {
-			await deleteTodo(id);
-			setTodos((prev) => prev.filter((todo) => todo._id !== id));
-		} catch (error) {
-			console.error("Error deleting todo:", error);
-		}
-	};
-
-	const handleEditClick = (todo: any) => {
-		setEditingTodoId(todo._id);
-		setEditValue(todo.title);
-	};
-
-	const handleSaveEdit = async (todoId: string) => {
-		try {
-			const response = await updateTodo(todoId, { title: editValue });
-			const updatedTodo = response.todo;
-
-			setTodos((prev) =>
-				prev.map((todo) =>
-					todo._id === updatedTodo._id ? { ...todo, ...updatedTodo } : todo
-				)
-			);
-			setEditingTodoId(null);
-		} catch (error) {
-			console.error("Error updating todo:", error);
-		}
-	};
-
-	const handleCancelEdit = () => {
-		setEditingTodoId(null);
-		setEditValue("");
-	};
-
-	const toggleCompleted = async (id: string, completed: boolean) => {
-		try {
-			await updateTodo(id, { completed: !completed });
-			setTodos((prev) =>
-				prev.map((todo) =>
-					todo._id === id ? { ...todo, completed: !todo.completed } : todo
-				)
-			);
-		} catch (error) {
-			console.error("Error updating todo completion:", error);
-		}
-	};
+	const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
 
 	useEffect(() => {
-		loadTodos();
-	}, []);
+		try {
+			dispatch(fetchTodos());
+		} catch (error) {
+			console.error("Error dispatching fetchTodos:", error);
+		}
+	}, [dispatch]);
+
+	const handleAddTodo = () => {
+		if (newTodo.trim()) {
+			dispatch(createTodo(newTodo));
+			setNewTodo("");
+		}
+	};
+
+	const handleEditTodo = (id: string) => {
+		setEditingTodoId(id);
+		const todo = todos.find((todo) => todo._id === id);
+		if (todo) setEditValue(todo.title);
+	};
+
+	const handleSaveEdit = () => {
+		if (editingTodoId) {
+			dispatch(
+				updateTodo({ id: editingTodoId, updateData: { title: editValue } })
+			);
+			setEditingTodoId(null);
+			setEditValue("");
+		}
+	};
+
+	const handleDeleteTodo = (id: string) => {
+		dispatch(deleteTodo(id));
+	};
+
+	const toggleCompleted = (id: string, completed: boolean) => {
+		dispatch(updateTodo({ id, updateData: { completed: !completed } }));
+	};
+
+	if (loading) return <Container>Loading...</Container>;
+	if (error) return <Container>Error: {error}</Container>;
 
 	return (
 		<Container>
 			<Title>Todo List</Title>
 			<InputContainer>
 				<Input
-					placeholder="What do you have planned?"
 					value={newTodo}
 					onChange={(e) => setNewTodo(e.target.value)}
+					placeholder="What do you have planned?"
 				/>
-				<AddButton onClick={handleAddTodo}>Add todo</AddButton>
+				<AddButton onClick={handleAddTodo}>Add Todo</AddButton>
 			</InputContainer>
 			<TodoContainer>
-				{todos.map((todo) => (
-					<Todo key={todo._id}>
-						<div style={{ display: "flex", alignItems: "center" }}>
-							<Checkbox
-								type="checkbox"
-								checked={todo.completed}
-								onChange={() => toggleCompleted(todo._id, todo.completed)}
-							/>
-							<TodoText $completed={todo.completed}>{todo.title}</TodoText>
-						</div>
-						<div>
-							{editingTodoId === todo._id ? (
-								<>
-									<Input
-										type="text"
-										value={editValue}
-										onChange={(e) => setEditValue(e.target.value)}
-									/>
-									<AddButton onClick={() => handleSaveEdit(todo._id)}>
-										Save
-									</AddButton>
-									<DeleteButton onClick={handleCancelEdit}>Cancel</DeleteButton>
-								</>
-							) : (
-								<>
-									<EditButton onClick={() => handleEditClick(todo)}>
-										Edit
-									</EditButton>
-									<DeleteButton onClick={() => handleDeleteTodo(todo._id)}>
-										Delete
-									</DeleteButton>
-								</>
-							)}
-						</div>
-					</Todo>
-				))}
+				{todos?.length > 0 ? (
+					todos.map((todo) => (
+						<Todo key={todo._id}>
+							<div style={{ display: "flex", alignItems: "center" }}>
+								<Checkbox
+									type="checkbox"
+									checked={todo.completed}
+									onChange={() => toggleCompleted(todo._id, todo.completed)}
+								/>
+								<TodoText $completed={todo.completed}>{todo.title}</TodoText>
+							</div>
+							<div>
+								{editingTodoId === todo._id ? (
+									<>
+										<Input
+											value={editValue}
+											onChange={(e) => setEditValue(e.target.value)}
+										/>
+										<AddButton onClick={handleSaveEdit}>Save</AddButton>
+										<DeleteButton onClick={() => setEditingTodoId(null)}>
+											Cancel
+										</DeleteButton>
+									</>
+								) : (
+									<>
+										<EditButton onClick={() => handleEditTodo(todo._id)}>
+											Edit
+										</EditButton>
+										<DeleteButton onClick={() => handleDeleteTodo(todo._id)}>
+											Delete
+										</DeleteButton>
+									</>
+								)}
+							</div>
+						</Todo>
+					))
+				) : (
+					<p>No tasks available.</p>
+				)}
 			</TodoContainer>
 		</Container>
 	);

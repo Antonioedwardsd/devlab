@@ -1,6 +1,8 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
+import { Provider } from "react-redux";
+import { store } from "../redux/store";
 import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/router";
@@ -47,7 +49,9 @@ export default function App({ Component, pageProps }: AppProps) {
 
 	return (
 		<UserProvider>
-			<Component {...pageProps} />
+			<Provider store={store}>
+				<Component {...pageProps} />
+			</Provider>
 		</UserProvider>
 	);
 }
