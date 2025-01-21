@@ -1,16 +1,25 @@
 import { Request, Response } from "express";
 import Task from "../models/TaskModel";
+import { taskSchema, updateTaskSchema } from "../validators/taskValidator";
+import { z } from "zod";
 
 export const createTask = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
 	try {
-		const { title, description } = req.body;
-		const task = await Task.create({ title, description });
+		const validatedData = taskSchema.parse(req.body);
+
+		const task = await Task.create(validatedData);
 		res.status(201).json(task);
 	} catch (error) {
-		res.status(500).json({ error: "Failed to create todo" });
+		if (error instanceof z.ZodError) {
+			res
+				.status(400)
+				.json({ error: "Validation failed", details: error.errors });
+		} else {
+			res.status(500).json({ error: "Failed to create todo" });
+		}
 	}
 };
 
@@ -40,16 +49,21 @@ export const getTaskById = async (
 	}
 };
 
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (
+	req: Request,
+	res: Response
+): Promise<void> => {
 	const { id } = req.params;
-	const updateData = req.body;
+
 	try {
 		if (!id) {
 			res.status(400).json({ message: "Task ID is required." });
 			return;
 		}
 
-		const updatedTask = await Task.findByIdAndUpdate(id, updateData, {
+		const validatedData = updateTaskSchema.parse(req.body);
+
+		const updatedTask = await Task.findByIdAndUpdate(id, validatedData, {
 			new: true,
 			runValidators: true,
 		});
@@ -63,10 +77,15 @@ export const updateTask = async (req: Request, res: Response) => {
 			.status(200)
 			.json({ message: "Task updated successfully.", task: updatedTask });
 	} catch (error) {
-		console.error("Error updating task:", error);
-		res
-			.status(500)
-			.json({ message: "An error occurred while updating the task." });
+		if (error instanceof z.ZodError) {
+			res
+				.status(400)
+				.json({ error: "Validation failed", details: error.errors });
+		} else {
+			res
+				.status(500)
+				.json({ error: "An error occurred while updating the task." });
+		}
 	}
 };
 

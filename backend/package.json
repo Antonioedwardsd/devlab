@@ -21,7 +21,8 @@
 		"express-oauth2-jwt-bearer": "^1.6.0",
 		"jwks-rsa": "^3.1.0",
 		"jwt-decode": "^4.0.0",
-		"mongoose": "^8.9.5"
+		"mongoose": "^8.9.5",
+		"zod": "^3.24.1"
 	},
 	"devDependencies": {
 		"@types/cors": "^2.8.17",
