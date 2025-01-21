@@ -10,6 +10,10 @@ export default function App({ Component, pageProps }: AppProps) {
 
 	useEffect(() => {
 		const validateSession = async () => {
+			if (localStorage.getItem("sessionValidated")) {
+				return;
+			}
+
 			try {
 				const res = await fetch("/api/auth/me", {
 					headers: { "Content-Type": "application/json" },
@@ -17,29 +21,13 @@ export default function App({ Component, pageProps }: AppProps) {
 
 				if (res.ok) {
 					const data = await res.json();
-					const token = data.accessToken;
-
-					if (token) {
-						// Validate token before storing
-						if (isValidToken(token)) {
-							localStorage.setItem("token", token);
-						} else {
-							console.warn(
-								"Token is invalid or expired. Redirecting to login."
-							);
-							localStorage.removeItem("token");
-							router.push("/api/auth/login");
-						}
-					} else {
-						console.warn("No accessToken found in response.");
-						router.push("/api/auth/login");
-					}
+					localStorage.setItem("sessionValidated", "true");
 				} else {
 					console.error("Failed to fetch session. Redirecting to login.");
 					router.push("/api/auth/login");
 				}
 			} catch (error) {
-				console.error("Error fetching token:", error);
+				console.error("Error validating session:", error);
 				router.push("/api/auth/login");
 			}
 		};

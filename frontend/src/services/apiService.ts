@@ -24,44 +24,43 @@ const apiService = () => {
 		}
 	);
 
-	const fetchTasks = async () => {
-		const response = await axiosInstance.get("/tasks");
+	const fetchTodos = async () => {
+		const response = await axiosInstance.get("/todos");
 		return response.data;
 	};
 
-	const createTask = async (title: string) => {
-		const response = await axiosInstance.post("/tasks", { title });
+	const createTodo = async (title: string) => {
+		const response = await axiosInstance.post("/todos", { title });
 		return response.data;
 	};
 
-	const updateTask = async (id: string, updateData: Record<string, any>) => {
+	const updateTodo = async (id: string, updateData: Record<string, any>) => {
 		try {
-			const response = await axiosInstance.put(`/tasks/${id}`, updateData);
-			console.log("Task updated:", response.data);
+			const response = await axiosInstance.put(`/todos/${id}`, updateData);
 			return response.data;
 		} catch (error: any) {
 			console.error(
-				"Error updating task:",
+				"Error updating todo:",
 				error.response?.data || error.message
 			);
 			throw error;
 		}
 	};
 
-	const deleteTask = async (id: string) => {
+	const deleteTodo = async (id: string) => {
 		try {
-			const response = await axiosInstance.delete(`/tasks/${id}`);
-			console.log("Task deleted:", response.data);
+			const response = await axiosInstance.delete(`/todos/${id}`);
+			return response.data;
 		} catch (error: any) {
 			console.error(
-				"Error deleting task:",
+				"Error deleting todo:",
 				error.response?.data || error.message
 			);
 			throw error;
 		}
 	};
 
-	return { fetchTasks, createTask, updateTask, deleteTask };
+	return { fetchTodos, createTodo, updateTodo, deleteTodo };
 };
 
 export default apiService;

@@ -57,7 +57,7 @@ const Home = () => {
 			<Container>
 				<Title>Hello {user.name} 👋</Title>
 				<ButtonContainer>
-					<StyledLink href="/tasks">Go to Tasks</StyledLink>
+					<StyledLink href="/todos">Go to Todos</StyledLink>
 					<StyledLink href="/api/auth/logout">Logout</StyledLink>
 				</ButtonContainer>
 			</Container>

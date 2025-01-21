@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface ITask extends Document {
+export interface ITodo extends Document {
 	title: string;
 	description?: string;
 	completed: boolean;
@@ -8,7 +8,7 @@ export interface ITask extends Document {
 	updatedAt: Date;
 }
 
-const TaskSchema: Schema = new Schema(
+const TodoSchema: Schema = new Schema(
 	{
 		title: { type: String, required: true },
 		description: { type: String },
@@ -17,5 +17,5 @@ const TaskSchema: Schema = new Schema(
 	{ timestamps: true }
 );
 
-const Task = mongoose.model<ITask>("Task", TaskSchema);
-export default Task;
+const Todo = mongoose.model<ITodo>("Todo", TodoSchema);
+export default Todo;

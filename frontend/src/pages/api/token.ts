@@ -24,7 +24,6 @@ export default async function handler(
 			}
 		);
 
-		console.log("Token obtained:", response.data);
 		res.status(200).json({ accessToken: response.data.access_token });
 	} catch (error: any) {
 		console.error(

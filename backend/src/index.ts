@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/database";
-import tasksRoutes from "./routes/tasksRoutes";
+import todosRoutes from "./routes/todosRoutes";
 
 dotenv.config();
 connectDB();
@@ -21,7 +21,7 @@ app.use(
 app.use(express.json());
 
 // Rutas
-app.use("/api/tasks", tasksRoutes);
+app.use("/api/todos", todosRoutes);
 
 // Manejo de errores global
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

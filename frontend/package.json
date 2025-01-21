@@ -20,8 +20,7 @@
 		"npm": "^11.0.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
-		"styled-components": "^6.1.14",
-		"uuid": "^11.0.5"
+		"styled-components": "^6.1.14"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3",
@@ -31,7 +30,6 @@
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
 		"@types/styled-components": "^5.1.34",
-		"@types/uuid": "^10.0.0",
 		"babel-loader": "^9.2.1",
 		"babel-plugin-styled-components": "^2.1.4",
 		"eslint": "^9",

@@ -55,7 +55,7 @@ const AddButton = styled.button`
 	}
 `;
 
-const TaskContainer = styled.div`
+const TodoContainer = styled.div`
 	width: 100%;
 	max-width: 500px;
 	display: flex;
@@ -63,7 +63,7 @@ const TaskContainer = styled.div`
 	gap: 10px;
 `;
 
-const Task = styled.div`
+const Todo = styled.div`
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -73,10 +73,10 @@ const Task = styled.div`
 	border: 1px solid #61dafb;
 `;
 
-const TaskText = styled.p<{ completed: boolean }>`
+const TodoText = styled.p<{ $completed: boolean }>`
 	margin: 0;
-	color: ${(props) => (props.completed ? "#61dafb" : "#ffffff")};
-	text-decoration: ${(props) => (props.completed ? "line-through" : "none")};
+	color: ${(props) => (props.$completed ? "#61dafb" : "#ffffff")};
+	text-decoration: ${(props) => (props.$completed ? "line-through" : "none")};
 	font-size: 1rem;
 `;
 
@@ -105,138 +105,138 @@ const DeleteButton = styled(EditButton)`
 	}
 `;
 
-const TaskList: React.FC = () => {
-	const [tasks, setTasks] = useState<any[]>([]);
-	const [newTask, setNewTask] = useState("");
-	const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+const TodoList: React.FC = () => {
+	const [todos, setTodos] = useState<any[]>([]);
+	const [newTodo, setNewTodo] = useState("");
+	const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
 	const [editValue, setEditValue] = useState("");
 
-	const { fetchTasks, createTask, deleteTask, updateTask } = apiService();
+	const { fetchTodos, createTodo, deleteTodo, updateTodo } = apiService();
 
-	const loadTasks = async () => {
+	const loadTodos = async () => {
 		try {
-			const data = await fetchTasks();
-			setTasks(data);
+			const data = await fetchTodos();
+			setTodos(data);
 		} catch (error: any) {
-			console.error("Error loading tasks:", error.message);
+			console.error("Error loading todos:", error.message);
 		}
 	};
 
-	const handleAddTask = async () => {
-		if (!newTask.trim()) return;
+	const handleAddTodo = async () => {
+		if (!newTodo.trim()) return;
 
 		try {
-			const addedTask = await createTask(newTask);
-			setTasks((prev) => [...prev, addedTask]);
-			setNewTask("");
+			const addedTodo = await createTodo(newTodo);
+			setTodos((prev) => [...prev, addedTodo]);
+			setNewTodo("");
 		} catch (error) {
-			console.error("Error adding task:", error);
+			console.error("Error adding todo:", error);
 		}
 	};
 
-	const handleDeleteTask = async (id: string) => {
+	const handleDeleteTodo = async (id: string) => {
 		try {
-			await deleteTask(id);
-			setTasks((prev) => prev.filter((task) => task._id !== id));
+			await deleteTodo(id);
+			setTodos((prev) => prev.filter((todo) => todo._id !== id));
 		} catch (error) {
-			console.error("Error deleting task:", error);
+			console.error("Error deleting todo:", error);
 		}
 	};
 
-	const handleEditClick = (task: any) => {
-		setEditingTaskId(task._id);
-		setEditValue(task.title);
+	const handleEditClick = (todo: any) => {
+		setEditingTodoId(todo._id);
+		setEditValue(todo.title);
 	};
 
-	const handleSaveEdit = async (taskId: string) => {
+	const handleSaveEdit = async (todoId: string) => {
 		try {
-			const response = await updateTask(taskId, { title: editValue });
-			const updatedTask = response.task;
+			const response = await updateTodo(todoId, { title: editValue });
+			const updatedTodo = response.todo;
 
-			setTasks((prev) =>
-				prev.map((task) =>
-					task._id === updatedTask._id ? { ...task, ...updatedTask } : task
+			setTodos((prev) =>
+				prev.map((todo) =>
+					todo._id === updatedTodo._id ? { ...todo, ...updatedTodo } : todo
 				)
 			);
-			setEditingTaskId(null);
+			setEditingTodoId(null);
 		} catch (error) {
-			console.error("Error updating task:", error);
+			console.error("Error updating todo:", error);
 		}
 	};
 
 	const handleCancelEdit = () => {
-		setEditingTaskId(null);
+		setEditingTodoId(null);
 		setEditValue("");
 	};
 
 	const toggleCompleted = async (id: string, completed: boolean) => {
 		try {
-			await updateTask(id, { completed: !completed });
-			setTasks((prev) =>
-				prev.map((task) =>
-					task._id === id ? { ...task, completed: !task.completed } : task
+			await updateTodo(id, { completed: !completed });
+			setTodos((prev) =>
+				prev.map((todo) =>
+					todo._id === id ? { ...todo, completed: !todo.completed } : todo
 				)
 			);
 		} catch (error) {
-			console.error("Error updating task completion:", error);
+			console.error("Error updating todo completion:", error);
 		}
 	};
 
 	useEffect(() => {
-		loadTasks();
+		loadTodos();
 	}, []);
 
 	return (
 		<Container>
-			<Title>Task List</Title>
+			<Title>Todo List</Title>
 			<InputContainer>
 				<Input
 					placeholder="What do you have planned?"
-					value={newTask}
-					onChange={(e) => setNewTask(e.target.value)}
+					value={newTodo}
+					onChange={(e) => setNewTodo(e.target.value)}
 				/>
-				<AddButton onClick={handleAddTask}>Add task</AddButton>
+				<AddButton onClick={handleAddTodo}>Add todo</AddButton>
 			</InputContainer>
-			<TaskContainer>
-				{tasks.map((task) => (
-					<Task key={task._id}>
+			<TodoContainer>
+				{todos.map((todo) => (
+					<Todo key={todo._id}>
 						<div style={{ display: "flex", alignItems: "center" }}>
 							<Checkbox
 								type="checkbox"
-								checked={task.completed}
-								onChange={() => toggleCompleted(task._id, task.completed)}
+								checked={todo.completed}
+								onChange={() => toggleCompleted(todo._id, todo.completed)}
 							/>
-							<TaskText completed={task.completed}>{task.title}</TaskText>
+							<TodoText $completed={todo.completed}>{todo.title}</TodoText>
 						</div>
 						<div>
-							{editingTaskId === task._id ? (
+							{editingTodoId === todo._id ? (
 								<>
 									<Input
 										type="text"
 										value={editValue}
 										onChange={(e) => setEditValue(e.target.value)}
 									/>
-									<AddButton onClick={() => handleSaveEdit(task._id)}>
+									<AddButton onClick={() => handleSaveEdit(todo._id)}>
 										Save
 									</AddButton>
 									<DeleteButton onClick={handleCancelEdit}>Cancel</DeleteButton>
 								</>
 							) : (
 								<>
-									<EditButton onClick={() => handleEditClick(task)}>
+									<EditButton onClick={() => handleEditClick(todo)}>
 										Edit
 									</EditButton>
-									<DeleteButton onClick={() => handleDeleteTask(task._id)}>
+									<DeleteButton onClick={() => handleDeleteTodo(todo._id)}>
 										Delete
 									</DeleteButton>
 								</>
 							)}
 						</div>
-					</Task>
+					</Todo>
 				))}
-			</TaskContainer>
+			</TodoContainer>
 		</Container>
 	);
 };
 
-export default TaskList;
+export default TodoList;

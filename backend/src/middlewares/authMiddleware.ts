@@ -8,12 +8,6 @@ const jwtCheck = auth({
 });
 
 export default (req: Request, res: Response, next: NextFunction): void => {
-	//° PRUEBAS
-	console.log("Incoming Request:");
-	console.log(`Method: ${req.method}`);
-	console.log(`Path: ${req.path}`);
-	console.log("Authorization Header:", req.headers.authorization);
-
 	jwtCheck(req, res, (err) => {
 		if (err) {
 			console.error("Token validation error:", err.message);
@@ -21,8 +15,6 @@ export default (req: Request, res: Response, next: NextFunction): void => {
 				.status(401)
 				.json({ error: "Unauthorized", message: err.message });
 		}
-		//° PRUEBAS
-		console.log("Decoded Token:", req.auth);
 		next();
 	});
 };
