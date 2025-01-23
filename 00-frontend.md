@@ -1,3 +1,5 @@
+## FRONTEND FOLDER
+
 # frontend\src\components\TodoList.tsx
 
 import React, { useState, useEffect } from 'react';
@@ -154,6 +156,7 @@ if (error) return <Container>Error: {error}</Container>;
 
 return (
 <Container>
+
 <Title>Todo List</Title>
 <InputContainer>
 <Input value={newTodo} onChange={(e) => setNewTodo(e.target.value)} placeholder="What do you have planned?" />
@@ -775,4 +778,29 @@ error: string | null;
 export interface TodoUpdateData {
 title?: string;
 completed?: boolean;
+}
+
+# frontend\tsconfig.json
+
+{
+"compilerOptions": {
+"target": "ES2017",
+"lib": ["dom", "dom.iterable", "esnext"],
+"allowJs": true,
+"skipLibCheck": true,
+"strict": true,
+"noEmit": true,
+"esModuleInterop": true,
+"module": "esnext",
+"moduleResolution": "node",
+"resolveJsonModule": true,
+"isolatedModules": true,
+"jsx": "preserve",
+"incremental": true,
+"paths": {
+"@/_": ["./src/_"]
+}
+},
+"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+"exclude": ["node_modules", ".next"]
 }

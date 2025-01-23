@@ -1,3 +1,5 @@
+## BACKEND FOLDER
+
 # backend\src\config\database.ts
 
 import mongoose from "mongoose";
@@ -313,4 +315,151 @@ console.log(`Server running on http://localhost:${PORT}`);
 "@types/yamljs": "^0.2.34",
 "ts-node-dev": "^2.0.0"
 }
+}
+
+# backend\swagger.yml
+
+openapi: 3.0.0
+info:
+title: Todo API
+description: API for managing todos
+version: 1.0.0
+servers:
+
+- url: http://localhost:5000/api
+  components:
+  schemas:
+  Todo:
+  type: object
+  properties:
+  id:
+  type: string
+  title:
+  type: string
+  description:
+  type: string
+  completed:
+  type: boolean
+  createdAt:
+  type: string
+  format: date-time
+  updatedAt:
+  type: string
+  format: date-time
+  required: - title
+  paths:
+  /todos:
+  get:
+  summary: Get all todos
+  tags: - Todos
+  responses:
+  200:
+  description: List of todos
+  content:
+  application/json:
+  schema:
+  type: array
+  items:
+  $ref: '#/components/schemas/Todo'
+  post:
+  summary: Create a new todo
+  tags: - Todos
+  requestBody:
+  required: true
+  content:
+  application/json:
+  schema:
+  type: object
+  properties:
+  title:
+  type: string
+  description:
+  type: string
+  completed:
+  type: boolean
+  responses:
+  201:
+  description: Todo created
+  content:
+  application/json:
+  schema:
+  $ref: '#/components/schemas/Todo'
+  /todos/{id}:
+  get:
+  summary: Get a todo by ID
+  tags: - Todos
+  parameters: - name: id
+  in: path
+  required: true
+  schema:
+  type: string
+  responses:
+  200:
+  description: A todo
+  content:
+  application/json:
+  schema:
+  $ref: '#/components/schemas/Todo'
+  404:
+  description: Todo not found
+  put:
+  summary: Update a todo by ID
+  tags: - Todos
+  parameters: - name: id
+  in: path
+  required: true
+  schema:
+  type: string
+  requestBody:
+  required: true
+  content:
+  application/json:
+  schema:
+  type: object
+  properties:
+  title:
+  type: string
+  description:
+  type: string
+  completed:
+  type: boolean
+  responses:
+  200:
+  description: Todo updated
+  content:
+  application/json:
+  schema:
+  $ref: '#/components/schemas/Todo'
+  404:
+  description: Todo not found
+  delete:
+  summary: Delete a todo by ID
+  tags: - Todos
+  parameters: - name: id
+  in: path
+  required: true
+  schema:
+  type: string
+  responses:
+  202:
+  description: Todo deleted
+  404:
+  description: Todo not found
+
+# backend\tsconfig.json
+
+{
+"compilerOptions": {
+"module": "esnext",
+"target": "esnext",
+"moduleResolution": "node",
+"outDir": "./dist",
+"rootDir": "./src",
+"strict": true,
+"esModuleInterop": true,
+"resolveJsonModule": true,
+"incremental": true
+},
+"include": ["src/**/*.ts"],
+"exclude": ["node_modules"]
 }
