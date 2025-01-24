@@ -57,10 +57,10 @@ const apiService = () => {
   };
 
   const updateTodo = async (id: string, updateData: Partial<Todo>): Promise<UpdateTodoResponse> => {
-    const response = await axiosInstance.put<Todo>(`/todos/${id}`, updateData);
+    const response = await axiosInstance.put<UpdateTodoResponse>(`/todos/${id}`, updateData);
 
-    if (response.data && response.data._id) {
-      return { message: 'Todo updated successfully', todo: response.data };
+    if (response.data && response.data.todo && response.data.todo._id) {
+      return { message: 'Todo updated successfully', todo: response.data.todo };
     }
 
     console.error('Invalid response data from updateTodo:', response.data);

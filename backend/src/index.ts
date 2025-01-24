@@ -1,24 +1,26 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const env = process.env.NODE_ENV || 'development';
+const envPath = path.resolve(__dirname, `../.env.${env}`);
+
+dotenv.config({ path: envPath });
+
 import express, { Request, Response, NextFunction } from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/database';
 import todosRoutes from './routes/todosRoutes';
 import swaggerUi from 'swagger-ui-express';
 import yaml from 'yamljs';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-dotenv.config();
 
 connectDB();
 
 const app = express();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const swaggerDocument = yaml.load(fs.readFileSync(path.join(__dirname, 'swagger.yml'), 'utf8'));
+const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yml'));
 
 app.use(
   cors({
