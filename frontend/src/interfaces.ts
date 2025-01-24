@@ -18,7 +18,7 @@ export interface ErrorResponse {
 export interface TodosState {
   todos: Todo[];
   loading: boolean;
-  error: string | null;
+  error: ErrorResponse | null;
 }
 
 export interface TodoUpdateData {

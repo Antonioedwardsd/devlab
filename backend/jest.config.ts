@@ -1,13 +1,9 @@
-import type { Config } from 'jest';
-
-const config: Config = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/__tests__/**/*.test.ts'], // Ubicación de los tests
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1', // Opcional, si usas alias en tu tsconfig
+  moduleFileExtensions: ['ts', 'js'],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
-  setupFilesAfterEnv: ['./jest.setup.ts'], // Configuración adicional
+  testMatch: ['**/__tests__/**/*.test.(ts|js)'],
 };
-
-export default config;

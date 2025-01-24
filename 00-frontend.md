@@ -152,7 +152,7 @@ dispatch(updateTodo({ id, updateData: { completed: !completed } }));
 };
 
 if (loading) return <Container>Loading...</Container>;
-if (error) return <Container>Error: {error}</Container>;
+if (error) return <Container>Error: {error.message}</Container>;
 
 return (
 <Container>
@@ -163,8 +163,9 @@ return (
 <AddButton onClick={handleAddTodo}>Add Todo</AddButton>
 </InputContainer>
 <TodoContainer>
-{todos?.length > 0 ? (
-todos.map((todo) => (
+{Array.isArray(todos) && todos.length > 0 ? (
+todos.map((todo) =>
+todo && todo.\_id ? (
 <Todo key={todo.\_id} $editing={editingTodoId === todo.\_id}>
 <div style={{ display: 'flex', alignItems: 'center' }}>
 <Checkbox
@@ -192,7 +193,8 @@ onChange={() => toggleCompleted(todo.\_id, todo.completed)}
 )}
 </ButtonGroup>
 </Todo>
-))
+) : null,
+)
 ) : (
 <p>No tasks available.</p>
 )}
@@ -512,6 +514,7 @@ export type AppDispatch = typeof store.dispatch;
 
 # frontend\src\redux\todosSlice.ts
 
+// File: src/redux/todosSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import apiService from '../services/apiService';
 import { UpdateTodoResponse, ErrorResponse, TodosState, TodoUpdateData } from '../interfaces';
@@ -575,11 +578,11 @@ state.error = null;
 })
 .addCase(fetchTodos.fulfilled, (state, action) => {
 state.loading = false;
-state.todos = action.payload;
+state.todos = action.payload || [];
 })
 .addCase(fetchTodos.rejected, (state, action) => {
 state.loading = false;
-state.error = action.payload as string;
+state.error = action.payload as ErrorResponse;
 })
 .addCase(createTodo.fulfilled, (state, action) => {
 state.todos.push(action.payload);
@@ -638,8 +641,17 @@ return Promise.reject(error);
 );
 
 const fetchTodos = async (): Promise<Todo[]> => {
+try {
 const response = await axiosInstance.get<Todo[]>('/todos');
+if (!Array.isArray(response.data)) {
+console.error('Invalid data format received:', response.data);
+return [];
+}
 return response.data;
+} catch (error) {
+console.error('Error fetching todos:', error);
+return [];
+}
 };
 
 const createTodo = async (title: string): Promise<Todo> => {
@@ -650,7 +662,7 @@ return response.data;
 const updateTodo = async (id: string, updateData: Partial<Todo>): Promise<UpdateTodoResponse> => {
 try {
 const response = await axiosInstance.put<UpdateTodoResponse>(`/todos/${id}`, updateData);
-return response.data; // La respuesta tendrá la estructura `UpdateTodoResponse`
+return response.data;
 } catch (error: unknown) {
 console.error('Error updating todo:', error instanceof Error ? error.message : error);
 throw error;
@@ -772,7 +784,7 @@ statusCode: number;
 export interface TodosState {
 todos: Todo[];
 loading: boolean;
-error: string | null;
+error: ErrorResponse | null;
 }
 
 export interface TodoUpdateData {

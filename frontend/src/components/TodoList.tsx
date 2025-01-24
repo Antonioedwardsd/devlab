@@ -133,9 +133,13 @@ const TodoList: React.FC = () => {
   };
 
   const handleEditTodo = (id: string) => {
-    setEditingTodoId(id);
-    const todo = todos.find((todo) => todo._id === id);
-    if (todo) setEditValue(todo.title);
+    const todo = todos.find((todo) => todo && todo._id === id);
+    if (todo) {
+      setEditingTodoId(id);
+      setEditValue(todo.title);
+    } else {
+      console.error('Todo not found for editing:', id);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -160,7 +164,7 @@ const TodoList: React.FC = () => {
   };
 
   if (loading) return <Container>Loading...</Container>;
-  if (error) return <Container>Error: {error}</Container>;
+  if (error) return <Container>Error: {error.message}</Container>;
 
   return (
     <Container>
@@ -170,36 +174,38 @@ const TodoList: React.FC = () => {
         <AddButton onClick={handleAddTodo}>Add Todo</AddButton>
       </InputContainer>
       <TodoContainer>
-        {todos?.length > 0 ? (
-          todos.map((todo) => (
-            <Todo key={todo._id} $editing={editingTodoId === todo._id}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Checkbox
-                  type="checkbox"
-                  checked={todo.completed}
-                  onChange={() => toggleCompleted(todo._id, todo.completed)}
-                />
-                {editingTodoId === todo._id ? (
-                  <Input $editing value={editValue} onChange={(e) => setEditValue(e.target.value)} />
-                ) : (
-                  <TodoText $completed={todo.completed}>{todo.title}</TodoText>
-                )}
-              </div>
-              <ButtonGroup>
-                {editingTodoId === todo._id ? (
-                  <>
-                    <AddButton onClick={handleSaveEdit}>Save</AddButton>
-                    <DeleteButton onClick={() => setEditingTodoId(null)}>Cancel</DeleteButton>
-                  </>
-                ) : (
-                  <>
-                    <EditButton onClick={() => handleEditTodo(todo._id)}>Edit</EditButton>
-                    <DeleteButton onClick={() => handleDeleteTodo(todo._id)}>Delete</DeleteButton>
-                  </>
-                )}
-              </ButtonGroup>
-            </Todo>
-          ))
+        {Array.isArray(todos) && todos.length > 0 ? (
+          todos.map((todo) =>
+            todo && todo._id ? (
+              <Todo key={todo._id} $editing={editingTodoId === todo._id}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Checkbox
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() => toggleCompleted(todo._id, todo.completed)}
+                  />
+                  {editingTodoId === todo._id ? (
+                    <Input $editing value={editValue} onChange={(e) => setEditValue(e.target.value)} />
+                  ) : (
+                    <TodoText $completed={todo.completed}>{todo.title}</TodoText>
+                  )}
+                </div>
+                <ButtonGroup>
+                  {editingTodoId === todo._id ? (
+                    <>
+                      <AddButton onClick={handleSaveEdit}>Save</AddButton>
+                      <DeleteButton onClick={() => setEditingTodoId(null)}>Cancel</DeleteButton>
+                    </>
+                  ) : (
+                    <>
+                      <EditButton onClick={() => handleEditTodo(todo._id)}>Edit</EditButton>
+                      <DeleteButton onClick={() => handleDeleteTodo(todo._id)}>Delete</DeleteButton>
+                    </>
+                  )}
+                </ButtonGroup>
+              </Todo>
+            ) : null,
+          )
         ) : (
           <p>No tasks available.</p>
         )}

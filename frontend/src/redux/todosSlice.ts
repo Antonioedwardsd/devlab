@@ -1,3 +1,4 @@
+// File: src/redux/todosSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import apiService from '../services/apiService';
 import { UpdateTodoResponse, ErrorResponse, TodosState, TodoUpdateData } from '../interfaces';
@@ -61,18 +62,27 @@ const todosSlice = createSlice({
       })
       .addCase(fetchTodos.fulfilled, (state, action) => {
         state.loading = false;
-        state.todos = action.payload;
+        const todos = action.payload || [];
+
+        state.todos = todos.filter((todo) => todo && todo._id);
       })
       .addCase(fetchTodos.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload as ErrorResponse;
       })
       .addCase(createTodo.fulfilled, (state, action) => {
         state.todos.push(action.payload);
       })
       .addCase(updateTodo.fulfilled, (state, action) => {
         const updatedTodo = action.payload.todo;
-        state.todos = state.todos.map((todo) => (todo._id === updatedTodo._id ? updatedTodo : todo));
+
+        if (!updatedTodo || !updatedTodo._id) {
+          console.error('Updated todo or its _id is undefined:', updatedTodo);
+          return;
+        }
+        state.todos = state.todos
+          .filter((todo) => todo && todo._id)
+          .map((todo) => (todo._id === updatedTodo._id ? updatedTodo : todo));
       })
       .addCase(deleteTodo.fulfilled, (state, action) => {
         state.todos = state.todos.filter((todo) => todo._id !== action.payload);

@@ -1,5 +1,108 @@
 ## BACKEND FOLDER
 
+# backend\src\_\_tests\_\_\controllers\todosController.test.ts
+
+import request from 'supertest';
+import mongoose from 'mongoose';
+import app from '../../index';
+import Todo from '../../models/TodoModel';
+
+describe('Todos Controller', () => {
+// Before each test, clear the Todo collection
+beforeEach(async () => {
+await Todo.deleteMany({});
+});
+
+// After all tests, close the Mongoose connection
+afterAll(async () => {
+await mongoose.connection.close();
+});
+
+it('should create a new todo', async () => {
+const response = await request(app).post('/api/todos').send({ title: 'Test Todo' }).expect(201);
+
+    expect(response.body.title).toBe('Test Todo');
+    expect(response.body.completed).toBe(false);
+
+});
+
+it('should retrieve all todos', async () => {
+const todo1 = new Todo({ title: 'First Test Todo' });
+const todo2 = new Todo({ title: 'Second Test Todo' });
+await todo1.save();
+await todo2.save();
+
+    const response = await request(app).get('/api/todos').expect(200);
+
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBe(2);
+    expect(response.body[0].title).toBe(todo1.title);
+    expect(response.body[1].title).toBe(todo2.title);
+
+});
+
+it('should retrieve a todo by ID', async () => {
+const newTodo = new Todo({ title: 'Test Todo' });
+await newTodo.save();
+
+    const response = await request(app).get(`/api/todos/${newTodo._id}`).expect(200);
+
+    expect(response.body.title).toBe(newTodo.title);
+
+});
+
+it('should update an existing todo', async () => {
+const newTodo = new Todo({ title: 'Test Todo' });
+await newTodo.save();
+
+    const response = await request(app)
+      .put(`/api/todos/${newTodo._id}`)
+      .send({ title: 'Updated Test Todo' })
+      .expect(200);
+
+    expect(response.body.todo.title).toBe('Updated Test Todo');
+
+});
+
+it('should delete an existing todo', async () => {
+const newTodo = new Todo({ title: 'Test Todo' });
+await newTodo.save();
+
+    await request(app).delete(`/api/todos/${newTodo._id}`).expect(202);
+
+    const deletedTodo = await Todo.findById(newTodo._id);
+    expect(deletedTodo).toBeNull();
+
+});
+
+it('should return 404 when retrieving a non-existent todo', async () => {
+const nonExistentId = new mongoose.Types.ObjectId();
+await request(app).get(`/api/todos/${nonExistentId}`).expect(404);
+});
+
+it('should return 404 when updating a non-existent todo', async () => {
+const nonExistentId = new mongoose.Types.ObjectId();
+await request(app).put(`/api/todos/${nonExistentId}`).send({ title: 'Non-existent Todo' }).expect(404);
+});
+
+it('should return 404 when deleting a non-existent todo', async () => {
+const nonExistentId = new mongoose.Types.ObjectId();
+await request(app).delete(`/api/todos/${nonExistentId}`).expect(404);
+});
+
+it('should return 400 when creating a todo without a title', async () => {
+await request(app).post('/api/todos').send({}).expect(400);
+});
+
+it('should return 400 when updating a todo with an empty title', async () => {
+const newTodo = new Todo({ title: 'Test Todo' });
+await newTodo.save();
+
+    await request(app).put(`/api/todos/${newTodo._id}`).send({ title: '' }).expect(400);
+
+});
+});
+
 # backend\src\config\database.ts
 
 import mongoose from "mongoose";
@@ -130,22 +233,23 @@ res.status(500).json({ error: "Failed to delete todo" });
 
 # backend\src\middlewares\authMiddleware.ts
 
-import { auth } from "express-oauth2-jwt-bearer";
-import { Request, Response, NextFunction } from "express";
+import { auth } from 'express-oauth2-jwt-bearer';
+import { Request, Response, NextFunction } from 'express';
 
 const jwtCheck = auth({
-audience: "https://taskapi.com/api/tasks",
-issuerBaseURL: "https://dev-3iiyrnf7x5ya3qwp.us.auth0.com/",
-tokenSigningAlg: "RS256",
+audience: 'https://taskapi.com/api/tasks',
+issuerBaseURL: 'https://dev-3iiyrnf7x5ya3qwp.us.auth0.com/',
+tokenSigningAlg: 'RS256',
 });
 
 export default (req: Request, res: Response, next: NextFunction): void => {
+if (process.env.NODE_ENV === 'test') {
+return next();
+}
 jwtCheck(req, res, (err) => {
 if (err) {
-console.error("Token validation error:", err.message);
-return res
-.status(401)
-.json({ error: "Unauthorized", message: err.message });
+console.error('Token validation error:', err.message);
+return res.status(401).json({ error: 'Unauthorized', message: err.message });
 }
 next();
 });
@@ -244,41 +348,56 @@ export type UpdateTodoInput = z.infer<typeof updateTodoSchema>;
 
 # backend\src\index.ts
 
-import express, { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import connectDB from "./config/database";
-import todosRoutes from "./routes/todosRoutes";
+import express, { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import connectDB from './config/database';
+import todosRoutes from './routes/todosRoutes';
+import swaggerUi from 'swagger-ui-express';
+import yaml from 'yamljs';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
+
 connectDB();
 
 const app = express();
 
+const **filename = fileURLToPath(import.meta.url);
+const **dirname = path.dirname(\_\_filename);
+
+const swaggerDocument = yaml.load(fs.readFileSync(path.join(\_\_dirname, 'swagger.yml'), 'utf8'));
+
 app.use(
 cors({
-origin: "http://localhost:3000",
-methods: ["GET", "POST", "PUT", "DELETE"],
+origin: 'http://localhost:3000',
+methods: ['GET', 'POST', 'PUT', 'DELETE'],
 credentials: true,
-})
+}),
 );
 
-// Middleware para parsear JSON
 app.use(express.json());
 
-// Rutas
-app.use("/api/todos", todosRoutes);
+app.use('/api/todos', todosRoutes);
 
-// Manejo de errores global
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-console.error("Unhandled error:", err.message);
-res.status(500).json({ error: "Internal server error" });
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.use((err: Error, req: Request, res: Response, \_next: NextFunction) => {
+console.error('Unhandled error:', err.message);
+res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV !== 'test') {
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
+}
+
+export default app;
 
 # backend\package.json
 

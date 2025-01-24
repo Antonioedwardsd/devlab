@@ -38,8 +38,17 @@ const apiService = () => {
   );
 
   const fetchTodos = async (): Promise<Todo[]> => {
-    const response = await axiosInstance.get<Todo[]>('/todos');
-    return response.data;
+    try {
+      const response = await axiosInstance.get<Todo[]>('/todos');
+      if (!Array.isArray(response.data)) {
+        console.error('Invalid data format received:', response.data);
+        return [];
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching todos:', error);
+      return [];
+    }
   };
 
   const createTodo = async (title: string): Promise<Todo> => {
@@ -48,13 +57,14 @@ const apiService = () => {
   };
 
   const updateTodo = async (id: string, updateData: Partial<Todo>): Promise<UpdateTodoResponse> => {
-    try {
-      const response = await axiosInstance.put<UpdateTodoResponse>(`/todos/${id}`, updateData);
-      return response.data; // La respuesta tendrá la estructura `UpdateTodoResponse`
-    } catch (error: unknown) {
-      console.error('Error updating todo:', error instanceof Error ? error.message : error);
-      throw error;
+    const response = await axiosInstance.put<Todo>(`/todos/${id}`, updateData);
+
+    if (response.data && response.data._id) {
+      return { message: 'Todo updated successfully', todo: response.data };
     }
+
+    console.error('Invalid response data from updateTodo:', response.data);
+    throw new Error('Invalid data returned from API');
   };
 
   const deleteTodo = async (id: string): Promise<void> => {

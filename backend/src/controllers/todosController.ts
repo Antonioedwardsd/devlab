@@ -59,18 +59,28 @@ export const updateTodo = async (req: Request, res: Response): Promise<void> => 
       runValidators: true,
     });
 
+    // Si no existe el todo
     if (!updatedTodo) {
       res.status(404).json({ message: 'Todo not found.' });
       return;
     }
 
-    res.status(200).json(updatedTodo);
+    res.status(200).json({
+      message: 'Todo updated successfully',
+      todo: updatedTodo,
+    });
   } catch (error) {
     console.error('Error updating todo:', error);
+
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation failed', details: error.errors });
+      res.status(400).json({
+        error: 'Validation failed',
+        details: error.errors,
+      });
     } else {
-      res.status(500).json({ error: 'An error occurred while updating the todo.' });
+      res.status(500).json({
+        error: 'An error occurred while updating the todo.',
+      });
     }
   }
 };
